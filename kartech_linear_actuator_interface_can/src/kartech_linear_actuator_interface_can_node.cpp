@@ -33,16 +33,17 @@
 
 int main(int argc, char ** argv)
 {
-    rclcpp::init(argc, argv);
-    rclcpp::NodeOptions options{};
-    rclcpp::executors::SingleThreadedExecutor exec{};
+  rclcpp::init(argc, argv);
+  rclcpp::NodeOptions options{};
+  rclcpp::executors::SingleThreadedExecutor exec{};
 
-    auto node = std::make_shared<kartech_linear_actuator_interface_can::KartechLinearActuatorInterfaceCAN>(options);
-    exec.add_node(node->get_node_base_interface());
-    exec.spin();
+  auto node =
+    std::make_shared<kartech_linear_actuator_interface_can::KartechLinearActuatorInterfaceCAN>(
+    options);
+  exec.add_node(node->get_node_base_interface());
+  exec.spin();
 
-    rclcpp::shutdown();
+  rclcpp::shutdown();
 
-    return 0;
+  return 0;
 }
-

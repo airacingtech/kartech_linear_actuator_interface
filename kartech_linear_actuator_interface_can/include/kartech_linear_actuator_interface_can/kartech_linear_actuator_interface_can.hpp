@@ -74,46 +74,44 @@ public:
 /** \brief Default constructor.
  * \param[in] options The options for this node.
  */
-    explicit KartechLinearActuatorInterfaceCAN(const rclcpp::NodeOptions & options);
+  explicit KartechLinearActuatorInterfaceCAN(const rclcpp::NodeOptions & options);
 
 private:
-
 /** \brief Convert reports received over CAN into ROS messages.
  * \param[in] msg The message received over CAN.
  */
-    void recvCAN(const Frame::SharedPtr msg);
+  void recvCAN(const Frame::SharedPtr msg);
 
-    void recvBrakePositionReport(const Frame::SharedPtr msg, DbcMessage * message);
+  void recvBrakePositionReport(const Frame::SharedPtr msg, DbcMessage * message);
 
-    void recvBrakeControl(const BrakeControl::SharedPtr msg);
+  void recvBrakeControl(const BrakeControl::SharedPtr msg);
 
-    void recvKdFreqDeadbandRequest(const KdFreqDeadbandRequest::SharedPtr msg);
-    
-    void recvKpKiRequest(const KpKiRequest::SharedPtr msg);
-    
-    void recvPwmFrequencyRequest(const PwmFrequencyRequest::SharedPtr msg);
+  void recvKdFreqDeadbandRequest(const KdFreqDeadbandRequest::SharedPtr msg);
 
-    std::uint8_t vehicle_number_;
+  void recvKpKiRequest(const KpKiRequest::SharedPtr msg);
 
-    // Parameters from launch
-    std::string dbc_file_;
-    float max_steer_angle_;
-    bool publish_my_laps_;
+  void recvPwmFrequencyRequest(const PwmFrequencyRequest::SharedPtr msg);
 
-    rclcpp::Subscription<BrakeControl>::SharedPtr subBrakeControl_;
-    rclcpp::Subscription<BrakePositionReport>::SharedPtr subBrakePositionReport_;
-	rclcpp::Subscription<KdFreqDeadbandRequest>::SharedPtr subKdFreqDeadbandRequest_;
-    rclcpp::Subscription<KpKiRequest>::SharedPtr subKpKiRequest_;
-    rclcpp::Subscription<PwmFrequencyRequest>::SharedPtr subPwmFrequencyRequest_;
-    rclcpp::Subscription<Frame>::SharedPtr sub_can_;
+  std::uint8_t vehicle_number_;
 
-    rclcpp::Publisher<BrakePositionReport>::SharedPtr pubBrakePositionReport_;
-    rclcpp::Publisher<Frame>::SharedPtr pub_can_;
+  // Parameters from launch
+  std::string dbc_file_;
+  float max_steer_angle_;
+  bool publish_my_laps_;
 
-    NewEagle::Dbc dbc_;
+  rclcpp::Subscription<BrakeControl>::SharedPtr subBrakeControl_;
+  rclcpp::Subscription<BrakePositionReport>::SharedPtr subBrakePositionReport_;
+  rclcpp::Subscription<KdFreqDeadbandRequest>::SharedPtr subKdFreqDeadbandRequest_;
+  rclcpp::Subscription<KpKiRequest>::SharedPtr subKpKiRequest_;
+  rclcpp::Subscription<PwmFrequencyRequest>::SharedPtr subPwmFrequencyRequest_;
+  rclcpp::Subscription<Frame>::SharedPtr sub_can_;
+
+  rclcpp::Publisher<BrakePositionReport>::SharedPtr pubBrakePositionReport_;
+  rclcpp::Publisher<Frame>::SharedPtr pub_can_;
+
+  NewEagle::Dbc dbc_;
 };
 
 }  // namespace kartech_linear_actuator_interface_can
 
 #endif  // KARTECH_LINEAR_ACTUATOR_INTERFACE_CAN__KARTECH_LINEAR_ACTUATOR_INTERFACE_CAN_HPP_
-

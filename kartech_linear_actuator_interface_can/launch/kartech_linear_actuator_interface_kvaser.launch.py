@@ -54,38 +54,41 @@ import os
 
 
 def generate_launch_description():
-    package_dir = get_package_share_directory('kartech_linear_actuator_interface_can')
+    package_dir = get_package_share_directory("kartech_linear_actuator_interface_can")
     kartech_linear_actuator_interface_params_file = LaunchConfiguration(
-        'kartech_linear_actuator_interface_params',
-        default=[os.path.join(package_dir, 'param', 'kartech_linear_actuator_interface.param.yaml')]
+        "kartech_linear_actuator_interface_params",
+        default=[
+            os.path.join(package_dir, "param", "kartech_linear_actuator_interface.param.yaml")
+        ],
     )
     kvaser_params_file = LaunchConfiguration(
-        'kvaser_params',
-        default=[os.path.join(package_dir, 'param', 'kvaser.param.yaml')]
+        "kvaser_params", default=[os.path.join(package_dir, "param", "kvaser.param.yaml")]
     )
 
     # make sure the dbc file gets installed with the launch file
-    dbc_file_path = os.path.join(package_dir, 'config', 'Kartech_Linear_Actuator.dbc')
+    dbc_file_path = os.path.join(package_dir, "config", "Kartech_Linear_Actuator.dbc")
 
     return LaunchDescription(
         [
             Node(
-                package='kartech_linear_actuator_interface_can',
-                executable='kartech_linear_actuator_interface_can_node',
-                output='screen',
-                namespace='kartech_linear_actuator_interface_interface',
+                package="kartech_linear_actuator_interface_can",
+                executable="kartech_linear_actuator_interface_can_node",
+                output="screen",
+                namespace="kartech_linear_actuator_interface_interface",
                 parameters=[
-                    {'dbc_file': dbc_file_path},
-                    kartech_linear_actuator_interface_params_file
+                    {"dbc_file": dbc_file_path},
+                    kartech_linear_actuator_interface_params_file,
                 ],
             ),
             Node(
-                package='kvaser_interface',
-                executable='kvaser_can_bridge',
-                output='screen',
-                namespace='kartech_linear_actuator_interface_interface',
-                parameters=[kvaser_params_file]),
-        ])
+                package="kvaser_interface",
+                executable="kvaser_can_bridge",
+                output="screen",
+                namespace="kartech_linear_actuator_interface_interface",
+                parameters=[kvaser_params_file],
+            ),
+        ]
+    )
 
 
 generate_launch_description()

@@ -16,15 +16,17 @@ import os
 
 
 def generate_launch_description():
-
     # get package directory
-    pkg_dir = get_package_share_directory('kartech_linear_actuator_interface_can')
+    pkg_dir = get_package_share_directory("kartech_linear_actuator_interface_can")
 
     dbc_file_path = DeclareLaunchArgument(
-        'dbc_file_path',
-        default_value=os.path.join(pkg_dir, "config", 'Kartech_Linear_Actuator.dbc'))
+        "dbc_file_path",
+        default_value=os.path.join(pkg_dir, "config", "Kartech_Linear_Actuator.dbc"),
+    )
 
-    kartech_linear_actuator_interface_param_file = os.path.join(pkg_dir, "param", "kartech_linear_actuator_interface.param.yaml")
+    kartech_linear_actuator_interface_param_file = os.path.join(
+        pkg_dir, "param", "kartech_linear_actuator_interface.param.yaml"
+    )
 
     socket_can_receiver_node = LifecycleNode(
         package="ros2_socketcan",
@@ -35,7 +37,7 @@ def generate_launch_description():
             {
                 "interface": LaunchConfiguration("interface"),
                 "interval_sec": LaunchConfiguration("interval_sec"),
-                'use_bus_time': LaunchConfiguration('use_bus_time'),
+                "use_bus_time": LaunchConfiguration("use_bus_time"),
             }
         ],
         output="screen",
@@ -47,8 +49,7 @@ def generate_launch_description():
             on_start=[
                 EmitEvent(
                     event=ChangeState(
-                        lifecycle_node_matcher=matches_action(
-                            socket_can_receiver_node),
+                        lifecycle_node_matcher=matches_action(socket_can_receiver_node),
                         transition_id=Transition.TRANSITION_CONFIGURE,
                     ),
                 ),
@@ -65,8 +66,7 @@ def generate_launch_description():
             entities=[
                 EmitEvent(
                     event=ChangeState(
-                        lifecycle_node_matcher=matches_action(
-                            socket_can_receiver_node),
+                        lifecycle_node_matcher=matches_action(socket_can_receiver_node),
                         transition_id=Transition.TRANSITION_ACTIVATE,
                     ),
                 ),
@@ -95,8 +95,7 @@ def generate_launch_description():
             on_start=[
                 EmitEvent(
                     event=ChangeState(
-                        lifecycle_node_matcher=matches_action(
-                            socket_can_sender_node),
+                        lifecycle_node_matcher=matches_action(socket_can_sender_node),
                         transition_id=Transition.TRANSITION_CONFIGURE,
                     ),
                 ),
@@ -113,8 +112,7 @@ def generate_launch_description():
             entities=[
                 EmitEvent(
                     event=ChangeState(
-                        lifecycle_node_matcher=matches_action(
-                            socket_can_sender_node),
+                        lifecycle_node_matcher=matches_action(socket_can_sender_node),
                         transition_id=Transition.TRANSITION_ACTIVATE,
                     ),
                 ),
@@ -124,17 +122,17 @@ def generate_launch_description():
     )
 
     kartech_linear_actuator_interface_node = Node(
-        package='kartech_linear_actuator_interface_can',
-        executable='kartech_linear_actuator_interface_can_node',
-        output='screen',
-        namespace='kartech_linear_actuator_interface_interface',
+        package="kartech_linear_actuator_interface_can",
+        executable="kartech_linear_actuator_interface_can_node",
+        output="screen",
+        namespace="kartech_linear_actuator_interface_interface",
         parameters=[
             kartech_linear_actuator_interface_param_file,
-            {'dbc_file': LaunchConfiguration('dbc_file_path')},
+            {"dbc_file": LaunchConfiguration("dbc_file_path")},
         ],
         remappings=[
-            ('can_tx', '/from_can_bus'),
-            ('can_rx', '/to_can_bus'),
+            ("can_tx", "/from_can_bus"),
+            ("can_rx", "/to_can_bus"),
         ],
     )
 
@@ -143,7 +141,7 @@ def generate_launch_description():
         DeclareLaunchArgument("interval_sec", default_value="0.01"),
         DeclareLaunchArgument("auto_configure", default_value="true"),
         DeclareLaunchArgument("auto_activate", default_value="true"),
-        DeclareLaunchArgument('use_bus_time', default_value='false'),
+        DeclareLaunchArgument("use_bus_time", default_value="false"),
         socket_can_receiver_node,
         socket_can_receiver_configure_event_handler,
         socket_can_receiver_activate_event_handler,
@@ -155,7 +153,7 @@ def generate_launch_description():
         socket_can_sender_configure_event_handler,
         socket_can_sender_activate_event_handler,
         kartech_linear_actuator_interface_node,
-        dbc_file_path
+        dbc_file_path,
     ]
 
     return LaunchDescription(launch_description)
