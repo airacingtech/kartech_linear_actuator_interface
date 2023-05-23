@@ -53,6 +53,7 @@ KartechLinearActuatorInterfaceCAN::KartechLinearActuatorInterfaceCAN(const rclcp
     subBrakeControl_ = this->create_subscription<BrakeControl>("brake_control", rclcpp::SensorDataQoS(), std::bind(&KartechLinearActuatorInterfaceCAN::recvBrakeControl, this, std::placeholders::_1));
     subKdFreqDeadbandRequest_ = this->create_subscription<KdFreqDeadbandRequest>("kd_freq_deadband_request", rclcpp::SensorDataQoS(), std::bind(&KartechLinearActuatorInterfaceCAN::recvKdFreqDeadbandRequest, this, std::placeholders::_1));
     subKpKiRequest_ = this->create_subscription<KpKiRequest>("kp_ki_request", rclcpp::SensorDataQoS(), std::bind(&KartechLinearActuatorInterfaceCAN::recvKpKiRequest, this, std::placeholders::_1));
+    subPwmFrequencyRequest_ = this->create_subscription<PwmFrequencyRequest>("pwm_frequency_request", rclcpp::SensorDataQoS(), std::bind(&KartechLinearActuatorInterfaceCAN::recvPwmFrequencyRequest, this, std::placeholders::_1));
     sub_can_ = this->create_subscription<Frame>(
         "can_tx", 500,
         std::bind(&KartechLinearActuatorInterfaceCAN::recvCAN, this, std::placeholders::_1)
@@ -140,6 +141,24 @@ void KartechLinearActuatorInterfaceCAN::recvKpKiRequest(const KpKiRequest::Share
 	message->GetSignal("Byte3")->SetResult(msg->byte3);
 	message->GetSignal("KP")->SetResult(msg->kp);
 	message->GetSignal("KI")->SetResult(msg->ki);
+
+	Frame frame = message->GetFrame();
+	pub_can_->publish(frame);
+}
+
+void KartechLinearActuatorInterfaceCAN::recvPwmFrequencyRequest(const PwmFrequencyRequest::SharedPtr msg)
+{
+	NewEagle::DbcMessage * message = dbc_.GetMessageById(ID_PWM_FREQUENCY_REQUEST);
+
+	message->GetSignal("MessageType")->SetResult(msg->messagetype);
+	message->GetSignal("DataType")->SetResult(msg->datatype);
+	message->GetSignal("AutoReplyFlag")->SetResult(msg->autoreplyflag);
+	message->GetSignal("ConfirmationFlag")->SetResult(msg->confirmationflag);
+	message->GetSignal("Byte2")->SetResult(msg->byte2);
+	message->GetSignal("Byte3")->SetResult(msg->byte3);
+	message->GetSignal("PWM_MIN")->SetResult(msg->pwm_min);
+	message->GetSignal("PWM_MAX")->SetResult(msg->pwm_max);
+	message->GetSignal("PWM_FREQ")->SetResult(msg->pwm_freq);
 
 	Frame frame = message->GetFrame();
 	pub_can_->publish(frame);

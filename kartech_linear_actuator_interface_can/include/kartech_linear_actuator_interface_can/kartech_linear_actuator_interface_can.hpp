@@ -48,6 +48,7 @@
 #include "kartech_linear_actuator_interface_msgs/msg/brake_position_report.hpp"
 #include "kartech_linear_actuator_interface_msgs/msg/kd_freq_deadband_request.hpp"
 #include "kartech_linear_actuator_interface_msgs/msg/kp_ki_request.hpp"
+#include "kartech_linear_actuator_interface_msgs/msg/pwm_frequency_request.hpp"
 
 #include "can_dbc_parser/DbcMessage.hpp"
 #include "can_dbc_parser/DbcSignal.hpp"
@@ -63,6 +64,7 @@ using kartech_linear_actuator_interface_msgs::msg::BrakeControl;
 using kartech_linear_actuator_interface_msgs::msg::BrakePositionReport;
 using kartech_linear_actuator_interface_msgs::msg::KdFreqDeadbandRequest;
 using kartech_linear_actuator_interface_msgs::msg::KpKiRequest;
+using kartech_linear_actuator_interface_msgs::msg::PwmFrequencyRequest;
 
 namespace kartech_linear_actuator_interface_can
 {
@@ -88,6 +90,8 @@ private:
     void recvKdFreqDeadbandRequest(const KdFreqDeadbandRequest::SharedPtr msg);
     
     void recvKpKiRequest(const KpKiRequest::SharedPtr msg);
+    
+    void recvPwmFrequencyRequest(const PwmFrequencyRequest::SharedPtr msg);
 
     std::uint8_t vehicle_number_;
 
@@ -100,12 +104,10 @@ private:
     rclcpp::Subscription<BrakePositionReport>::SharedPtr subBrakePositionReport_;
 	rclcpp::Subscription<KdFreqDeadbandRequest>::SharedPtr subKdFreqDeadbandRequest_;
     rclcpp::Subscription<KpKiRequest>::SharedPtr subKpKiRequest_;
+    rclcpp::Subscription<PwmFrequencyRequest>::SharedPtr subPwmFrequencyRequest_;
     rclcpp::Subscription<Frame>::SharedPtr sub_can_;
 
-    rclcpp::Publisher<BrakeControl>::SharedPtr pubBrakeControl_;
     rclcpp::Publisher<BrakePositionReport>::SharedPtr pubBrakePositionReport_;
-	rclcpp::Publisher<KdFreqDeadbandRequest>::SharedPtr pubKdFreqDeadbandRequest_;
-    rclcpp::Publisher<KpKiRequest>::SharedPtr pubKpKiRequest_;
     rclcpp::Publisher<Frame>::SharedPtr pub_can_;
 
     NewEagle::Dbc dbc_;
