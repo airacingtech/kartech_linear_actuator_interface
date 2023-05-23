@@ -1,0 +1,46 @@
+VERSION "HIPBNYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY/4/%%%/4/'%**4YYY///"
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+
+BS_:
+
+BU_:
+
+
+BO_ 2164195328 Brake_Control: 8 Vector__XXX
+ SG_ Position_Command : 0|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ DPOS_LOW : 16|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Confirmation_Flag : 15|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Autoreply_Flag : 14|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Datatype : 8|6@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ DPOS_HI : 24|6@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Motor_Enable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Clutch_Enable : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 2164195329 Brake_Position_Report: 8 Vector__XXX
+ SG_ ConfirmationFlag : 8|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ AutoReplyFlag : 9|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ DataType : 10|6@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ MessageType : 0|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ShaftExtension : 16|16@1+ (1,0) [0|0] "" Vector__XXX
