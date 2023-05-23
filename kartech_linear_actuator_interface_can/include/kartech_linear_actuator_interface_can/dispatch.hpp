@@ -40,6 +40,9 @@ enum ListMessageIDs
   ID_KD_FREQ_DEADBAND_REQUEST = 0xff0000,
   ID_KP_KI_REQUEST = 0xff0000,
   ID_PWM_FREQUENCY_REQUEST = 0xff0000,
+  ID_HEARTBEAT = 0xcfde801,
+  ID_LEFT_JOYSTICK = 0xcfdd633,
+  ID_RIGHT_JOYSTICK = 0xcfdd834,
 };
 
 }  // namespace kartech_linear_actuator_interface_can

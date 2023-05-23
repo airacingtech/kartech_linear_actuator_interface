@@ -52,6 +52,11 @@ KartechLinearActuatorInterfaceCAN::KartechLinearActuatorInterfaceCAN(
   pubBrakePositionReport_ = this->create_publisher<BrakePositionReport>(
     "brake_position_report",
     rclcpp::SensorDataQoS());
+  pubHeartbeat_ = this->create_publisher<Heartbeat>("heartbeat", rclcpp::SensorDataQoS());
+  pubLeftJoystick_ = this->create_publisher<LeftJoystick>("left_joystick", rclcpp::SensorDataQoS());
+  pubRightJoystick_ = this->create_publisher<RightJoystick>(
+    "right_joystick",
+    rclcpp::SensorDataQoS());
 
   subBrakeControl_ = this->create_subscription<BrakeControl>(
     "brake_control",
@@ -92,6 +97,15 @@ void KartechLinearActuatorInterfaceCAN::recvCAN(const Frame::SharedPtr msg)
     switch (id) {
       case ID_BRAKE_POSITION_REPORT:
         RECV_DBC(recvBrakePositionReport);
+        break;
+      case ID_HEARTBEAT:
+        RECV_DBC(recvHeartbeat);
+        break;
+      case ID_LEFT_JOYSTICK:
+        RECV_DBC(recvLeftJoystick);
+        break;
+      case ID_RIGHT_JOYSTICK:
+        RECV_DBC(recvRightJoystick);
         break;
       default:
         break;
@@ -184,6 +198,49 @@ void KartechLinearActuatorInterfaceCAN::recvPwmFrequencyRequest(
 
   Frame frame = message->GetFrame();
   pub_can_->publish(frame);
+}
+
+void KartechLinearActuatorInterfaceCAN::recvHeartbeat(
+  const Frame::SharedPtr msg,
+  DbcMessage * message)
+{
+  Heartbeat out;
+  out.stamp = msg->header.stamp;
+
+  out.vehicle_safety_controller_mode =
+    message->GetSignal("Vehicle_Safety_Controller_Mode")->GetResult();
+  out.autonomy_mode = message->GetSignal("Autonomy_Mode")->GetResult();
+  out.e_stop_indication = message->GetSignal("E_Stop_Indication")->GetResult();
+
+  pubHeartbeat_->publish(out);
+}
+
+void KartechLinearActuatorInterfaceCAN::recvLeftJoystick(
+  const Frame::SharedPtr msg,
+  DbcMessage * message)
+{
+  LeftJoystick out;
+  out.stamp = msg->header.stamp;
+
+  out.left_joystick_x = message->GetSignal("Left_Joystick_X")->GetResult();
+  out.left_joystick_y = message->GetSignal("Left_Joystick_Y")->GetResult();
+  out.left_button = message->GetSignal("Left_Button")->GetResult();
+
+  pubLeftJoystick_->publish(out);
+}
+
+void KartechLinearActuatorInterfaceCAN::recvRightJoystick(
+  const Frame::SharedPtr msg,
+  DbcMessage * message)
+{
+  RightJoystick out;
+  out.stamp = msg->header.stamp;
+
+  out.right_joystick_x = message->GetSignal("Right_Joystick_X")->GetResult();
+  out.right_joystick_y = message->GetSignal("Right_Joystick_Y")->GetResult();
+  out.right_button = message->GetSignal("Right_Button")->GetResult();
+
+  pubRightJoystick_->publish(out);
 }
 
 }  // namespace kartech_linear_actuator_interface_can

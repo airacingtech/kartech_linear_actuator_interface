@@ -49,6 +49,9 @@
 #include "kartech_linear_actuator_interface_msgs/msg/kd_freq_deadband_request.hpp"
 #include "kartech_linear_actuator_interface_msgs/msg/kp_ki_request.hpp"
 #include "kartech_linear_actuator_interface_msgs/msg/pwm_frequency_request.hpp"
+#include "kartech_linear_actuator_interface_msgs/msg/heartbeat.hpp"
+#include "kartech_linear_actuator_interface_msgs/msg/left_joystick.hpp"
+#include "kartech_linear_actuator_interface_msgs/msg/right_joystick.hpp"
 
 #include "can_dbc_parser/DbcMessage.hpp"
 #include "can_dbc_parser/DbcSignal.hpp"
@@ -65,6 +68,9 @@ using kartech_linear_actuator_interface_msgs::msg::BrakePositionReport;
 using kartech_linear_actuator_interface_msgs::msg::KdFreqDeadbandRequest;
 using kartech_linear_actuator_interface_msgs::msg::KpKiRequest;
 using kartech_linear_actuator_interface_msgs::msg::PwmFrequencyRequest;
+using kartech_linear_actuator_interface_msgs::msg::Heartbeat;
+using kartech_linear_actuator_interface_msgs::msg::LeftJoystick;
+using kartech_linear_actuator_interface_msgs::msg::RightJoystick;
 
 namespace kartech_linear_actuator_interface_can
 {
@@ -89,6 +95,9 @@ private:
   void recvKdFreqDeadbandRequest(const KdFreqDeadbandRequest::SharedPtr msg);
 
   void recvKpKiRequest(const KpKiRequest::SharedPtr msg);
+  void recvHeartbeat(const Frame::SharedPtr msg, DbcMessage * message);
+  void recvLeftJoystick(const Frame::SharedPtr msg, DbcMessage * message);
+  void recvRightJoystick(const Frame::SharedPtr msg, DbcMessage * message);
 
   void recvPwmFrequencyRequest(const PwmFrequencyRequest::SharedPtr msg);
 
@@ -107,6 +116,9 @@ private:
   rclcpp::Subscription<Frame>::SharedPtr sub_can_;
 
   rclcpp::Publisher<BrakePositionReport>::SharedPtr pubBrakePositionReport_;
+  rclcpp::Publisher<Heartbeat>::SharedPtr pubHeartbeat_;
+  rclcpp::Publisher<LeftJoystick>::SharedPtr pubLeftJoystick_;
+  rclcpp::Publisher<RightJoystick>::SharedPtr pubRightJoystick_;
   rclcpp::Publisher<Frame>::SharedPtr pub_can_;
 
   NewEagle::Dbc dbc_;

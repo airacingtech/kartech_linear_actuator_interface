@@ -1,0 +1,5 @@
+builtin_interfaces/Time stamp
+
+uint8 vehicle_safety_controller_mode
+uint8 autonomy_mode
+uint32 e_stop_indication

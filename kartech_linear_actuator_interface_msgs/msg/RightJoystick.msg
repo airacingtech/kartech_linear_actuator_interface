@@ -1,0 +1,5 @@
+builtin_interfaces/Time stamp
+
+uint16 right_joystick_x
+uint16 right_joystick_y
+uint8 right_button

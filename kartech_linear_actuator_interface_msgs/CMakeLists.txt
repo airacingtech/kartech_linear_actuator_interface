@@ -28,6 +28,9 @@ set(msg_files
     "msg/KdFreqDeadbandRequest.msg"
     "msg/KpKiRequest.msg"
 	"msg/PwmFrequencyRequest.msg"
+	"msg/Heartbeat.msg"
+	"msg/LeftJoystick.msg"
+	"msg/RightJoystick.msg"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

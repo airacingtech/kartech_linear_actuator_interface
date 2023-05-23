@@ -76,6 +76,20 @@ BO_ 2164195328 PWM_Frequency_Request: 8 Vector__XXX
  SG_ PWM_MAX : 40|8@1+ (1,0) [0|0] "" Vector__XXX
  SG_ PWM_FREQ : 48|16@1+ (1,0) [0|0] "" Vector__XXX
 
+BO_ 2365450241 Heartbeat: 8 Vector__XXX
+ SG_ Vehicle_Safety_Controller_Mode : 0|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Autonomy_Mode : 8|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ E_Stop_Indication : 16|32@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 2365445683 Left_Joystick: 8 Vector__XXX
+ SG_ Left_Joystick_X : 0|16@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Left_Joystick_Y : 16|16@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Left_Button : 40|8@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 2365446196 Right_Joystick: 8 Vector__XXX
+ SG_ Right_Joystick_X : 0|16@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Right_Joystick_Y : 16|16@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Right_Button : 40|8@1+ (1,0) [0|0] "" Vector__XXX
 
 CM_ SG_ 2164195328 Byte2 "Must be set to 0.";
 CM_ SG_ 2164195328 Byte3 "Must be set to 0.";
