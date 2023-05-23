@@ -51,6 +51,7 @@ KartechLinearActuatorInterfaceCAN::KartechLinearActuatorInterfaceCAN(const rclcp
     pubBrakePositionReport_ = this->create_publisher<BrakePositionReport>("brake_position_report", rclcpp::SensorDataQoS());
 
     subBrakeControl_ = this->create_subscription<BrakeControl>("brake_control", rclcpp::SensorDataQoS(), std::bind(&KartechLinearActuatorInterfaceCAN::recvBrakeControl, this, std::placeholders::_1));
+    subKdFreqDeadbandRequest_ = this->create_subscription<KdFreqDeadbandRequest>("kd_freq_deadband_request", rclcpp::SensorDataQoS(), std::bind(&KartechLinearActuatorInterfaceCAN::recvKdFreqDeadbandRequest, this, std::placeholders::_1));
     sub_can_ = this->create_subscription<Frame>(
         "can_tx", 500,
         std::bind(&KartechLinearActuatorInterfaceCAN::recvCAN, this, std::placeholders::_1)
@@ -104,6 +105,23 @@ void KartechLinearActuatorInterfaceCAN::recvBrakeControl(const BrakeControl::Sha
 	message->GetSignal("DPOS_HI")->SetResult(msg->dpos_hi);
 	message->GetSignal("Motor_Enable")->SetResult(msg->motor_enable);
 	message->GetSignal("Clutch_Enable")->SetResult(msg->clutch_enable);
+
+	Frame frame = message->GetFrame();
+	pub_can_->publish(frame);
+}
+
+void KartechLinearActuatorInterfaceCAN::recvKdFreqDeadbandRequest(const KdFreqDeadbandRequest::SharedPtr msg)
+{
+	NewEagle::DbcMessage * message = dbc_.GetMessageById(ID_KD_FREQ_DEADBAND_REQUEST);
+
+	message->GetSignal("MessageType")->SetResult(msg->messagetype);
+	message->GetSignal("DataType")->SetResult(msg->datatype);
+	message->GetSignal("AutoReplyFlag")->SetResult(msg->autoreplyflag);
+	message->GetSignal("ConfirmationFlag")->SetResult(msg->confirmationflag);
+	message->GetSignal("Byte2")->SetResult(msg->byte2);
+	message->GetSignal("Byte3")->SetResult(msg->byte3);
+	message->GetSignal("KD")->SetResult(msg->kd);
+	message->GetSignal("ErrorDeadBand")->SetResult(msg->errordeadband);
 
 	Frame frame = message->GetFrame();
 	pub_can_->publish(frame);

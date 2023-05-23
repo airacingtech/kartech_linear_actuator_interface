@@ -36,7 +36,8 @@ namespace kartech_linear_actuator_interface_can
 enum ListMessageIDs
 {
     ID_BRAKE_CONTROL = 0xff0000,
-	ID_BRAKE_POSITION_REPORT = 0xff0001,
+    ID_BRAKE_POSITION_REPORT = 0xff0001,
+	ID_KD_FREQ_DEADBAND_REQUEST = 0xff0000,
 };
 
 }  // namespace kartech_linear_actuator_interface_can

@@ -44,3 +44,18 @@ BO_ 2164195329 Brake_Position_Report: 8 Vector__XXX
  SG_ DataType : 10|6@1+ (1,0) [0|0] "" Vector__XXX
  SG_ MessageType : 0|8@1+ (1,0) [0|0] "" Vector__XXX
  SG_ ShaftExtension : 16|16@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 2164195328 KD_Freq_Deadband_Request: 8 Vector__XXX
+ SG_ MessageType : 0|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ DataType : 8|6@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ AutoReplyFlag : 14|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ConfirmationFlag : 15|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Byte2 : 16|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ Byte3 : 24|8@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ KD : 32|16@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorDeadBand : 56|8@1+ (1,0) [0|0] "" Vector__XXX
+
+CM_ SG_ 2164195328 Byte2 "Must be set to 0.";
+CM_ SG_ 2164195328 Byte3 "Must be set to 0.";
+VAL_ 2164195328 Byte2 0 "Default" ;
+VAL_ 2164195328 Byte3 1 "Default" 0 "Default" ;
