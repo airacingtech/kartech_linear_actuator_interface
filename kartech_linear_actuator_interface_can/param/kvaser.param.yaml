@@ -3,5 +3,5 @@
   # Kvaser node parameters
     hardware_id: 12055
     circuit_id: 1
-    bit_rate: 250000
-    enable_echo: false
+    bit_rate: 500000
+    enable_echo: true
