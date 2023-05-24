@@ -131,7 +131,7 @@ void KartechLinearActuatorInterfaceCAN::recvBrakePositionReport(
 
 void KartechLinearActuatorInterfaceCAN::recvBrakeControl(const BrakeControl::SharedPtr msg)
 {
-  NewEagle::DbcMessage * message = dbc_.GetMessageById(ID_BRAKE_CONTROL);
+  NewEagle::DbcMessage * message = dbc_.GetMessage("Brake_Control");
 
   message->GetSignal("Position_Command")->SetResult(msg->position_command);
   message->GetSignal("Datatype")->SetResult(msg->datatype);
@@ -149,7 +149,7 @@ void KartechLinearActuatorInterfaceCAN::recvBrakeControl(const BrakeControl::Sha
 void KartechLinearActuatorInterfaceCAN::recvKdFreqDeadbandRequest(
   const KdFreqDeadbandRequest::SharedPtr msg)
 {
-  NewEagle::DbcMessage * message = dbc_.GetMessageById(ID_KD_FREQ_DEADBAND_REQUEST);
+  NewEagle::DbcMessage * message = dbc_.GetMessage("KD_Freq_Deadband_Request");
 
   message->GetSignal("MessageType")->SetResult(msg->messagetype);
   message->GetSignal("DataType")->SetResult(msg->datatype);
@@ -166,7 +166,7 @@ void KartechLinearActuatorInterfaceCAN::recvKdFreqDeadbandRequest(
 
 void KartechLinearActuatorInterfaceCAN::recvKpKiRequest(const KpKiRequest::SharedPtr msg)
 {
-  NewEagle::DbcMessage * message = dbc_.GetMessageById(ID_KP_KI_REQUEST);
+  NewEagle::DbcMessage * message = dbc_.GetMessage("KP_KI_Request");
 
   message->GetSignal("MessageType")->SetResult(msg->messagetype);
   message->GetSignal("DataType")->SetResult(msg->datatype);
@@ -184,7 +184,7 @@ void KartechLinearActuatorInterfaceCAN::recvKpKiRequest(const KpKiRequest::Share
 void KartechLinearActuatorInterfaceCAN::recvPwmFrequencyRequest(
   const PwmFrequencyRequest::SharedPtr msg)
 {
-  NewEagle::DbcMessage * message = dbc_.GetMessageById(ID_PWM_FREQUENCY_REQUEST);
+  NewEagle::DbcMessage * message = dbc_.GetMessage("PWM_Frequency_Request");
 
   message->GetSignal("MessageType")->SetResult(msg->messagetype);
   message->GetSignal("DataType")->SetResult(msg->datatype);
