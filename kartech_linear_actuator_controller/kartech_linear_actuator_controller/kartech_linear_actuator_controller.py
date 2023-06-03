@@ -39,8 +39,6 @@ X_POSITION = []
 Y_PRESSURE = []
 X_VELOCITY = []
 
-ENABLE_VIZ = False
-
 # Max Stroke: 3.125"
 
 # BRAKE_POSITIONS_MINCH_CALIB = np.array([1.8, 1.9, 2.0, 2.1, 2.3, 2.35, 2.4, 2.5, 2.6]) * 1000.0
@@ -127,8 +125,6 @@ class KartechLinearActuatorController(Node):
         if not self.brakeModel.calibrated and self.calibration_brake_position is not None:
             # Calibration Mode
             self.send_brake_position(self.calibration_brake_position)
-            return
-        if not self.brakeModel.calibrated:
             return
         if self.brake_request is None:
             return
@@ -227,7 +223,7 @@ class KartechLinearActuatorController(Node):
             positions = X_POSITION
             pressures = Y_PRESSURE
             velocities = X_VELOCITY
-            self.brakeModel.calibrate(positions, pressures, velocities, enable_visualization=ENABLE_VIZ)
+            self.brakeModel.calibrate(positions, pressures, velocities, enable_visualization=False)
             self.calibration_timer.cancel()
 
 class BrakeModel:
@@ -235,7 +231,6 @@ class BrakeModel:
         self.models = {"sigmoid": 0, "piecewise linear curve": 1}
         self._model = self.models["piecewise linear curve"]
         self._calibrated = False
-        self.calibrated = False
         self.scale_factor = 1000000.0
         self.min_position = None
         self.max_position = None
@@ -269,11 +264,11 @@ class BrakeModel:
         self.max_position = max(positions)
         self.min_pressure = min(pressures)
         self.max_pressure = max(pressures)
-        # TOOD: record velocity differential
+        # TODO: record velocity differential
         if self._model == self.models["sigmoid"]:
-            self.calibrateSigmoid(positions, pressures, ENABLE_VIZ)
+            self.calibrateSigmoid(positions, pressures, enable_visualization)
         else:
-            self.calibratePieceWiseLinearCurve(positions, pressures, ENABLE_VIZ)
+            self.calibratePieceWiseLinearCurve(positions, pressures, enable_visualization)
 
     def calibratePieceWiseLinearCurve(self, positions, pressures, enable_visualization=False):
         X = np.array(positions)
@@ -302,7 +297,7 @@ class BrakeModel:
             plt.ylabel("Position")
             plt.title("Inverse Piecewise Linear Curve")
             plt.show()
-            #  plt.show(block=False)
+            # plt.show(block=False)
         self.calibrated = True
 
     def calibrateSigmoid(self, positions, pressures, enable_visualization=False):
