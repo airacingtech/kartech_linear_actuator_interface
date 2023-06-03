@@ -29,7 +29,7 @@ BRAKE_POSITIONS_MINCH = np.array([0.925, 1.85, 1.9, 1.95, 2.0, 2.05, 2.1, 2.15, 
 # do this dynamically during callibration.
 # remove human in the loop to change the input position values for interpolation.
 
-BRAKE_POSITIONS_MINCH_CALIB = np.array([1.9, 2.3, 2.4, 2.45, 2.5, 2.6]) * 1000.0#, 2.7, 2.8, 2.9, 3.0]) * 1000.0
+BRAKE_POSITIONS_MINCH_CALIB = np.array([1.9, 2.2, 2.3, 2.4, 2.45, 2.5, 2.6]) * 1000.0#, 2.7, 2.8, 2.9, 3.0]) * 1000.0
 BRAKE_PRESSURE_KPA_CALIB = np.zeros(len(BRAKE_POSITIONS_MINCH_CALIB))
 
 # below 0.066: steady state error
