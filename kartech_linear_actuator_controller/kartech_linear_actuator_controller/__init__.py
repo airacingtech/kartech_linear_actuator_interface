@@ -29,7 +29,7 @@ BRAKE_POSITIONS_MINCH = np.array([0.925, 1.85, 1.9, 1.95, 2.0, 2.05, 2.1, 2.15, 
 # do this dynamically during callibration.
 # remove human in the loop to change the input position values for interpolation.
 
-BRAKE_POSITIONS_MINCH_CALIB = np.array([0.5, 0.7, 1.0, 1.6, 1.75, 1.8, 1.9, 2.1]) * 1000.0#, 2.7, 2.8, 2.9, 3.0]) * 1000.0
+BRAKE_POSITIONS_MINCH_CALIB = np.array([0.7, 1.0, 1.6, 1.75, 1.9, 2.0, 2.1]) * 1000.0#, 2.7, 2.8, 2.9, 3.0]) * 1000.0
 BRAKE_PRESSURE_KPA_CALIB = np.zeros(len(BRAKE_POSITIONS_MINCH_CALIB))
 
 # below 0.066: steady state error
@@ -118,6 +118,9 @@ class KartechLinearActuatorController(Node):
         if not self.calibrated:
             return
         if self.brake_request is None:
+            return
+        if self.brake_request.akit_brakepedalreq == 0:
+            self.send_brake_position(500)
             return
         brake_req_kpa = self.brake_request.akit_brakepedalreq
         # position = self.linear_map(brake_request.akit_brakepedalreq, RAPTOR_BRAKE_REQ_MIN, RAPTOR_BRAKE_REQ_MAX, BRAKE_MIN, BRAKE_MAX)
