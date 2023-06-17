@@ -43,6 +43,9 @@ enum ListMessageIDs
   ID_HEARTBEAT = 0xcfde801,
   ID_LEFT_JOYSTICK = 0xcfdd633,
   ID_RIGHT_JOYSTICK = 0xcfdd834,
+  ID_FRONT_RIGHT_WHEEL_ENCODER = 0x058c,
+  ID_FRONT_LEFT_WHEEL_ENCODER = 0x05a0,
+  ID_REAR_AXLE_WHEEL_ENCODER = 0x058b,
 };
 
 }  // namespace kartech_linear_actuator_interface_can

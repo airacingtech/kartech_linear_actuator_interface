@@ -31,6 +31,9 @@ set(msg_files
 	"msg/Heartbeat.msg"
 	"msg/LeftJoystick.msg"
 	"msg/RightJoystick.msg"
+	"msg/FrontRightWheelEncoder.msg"
+	"msg/FrontLeftWheelEncoder.msg"
+	"msg/RearAxleWheelEncoder.msg"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

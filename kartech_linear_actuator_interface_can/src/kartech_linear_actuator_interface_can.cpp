@@ -57,6 +57,13 @@ KartechLinearActuatorInterfaceCAN::KartechLinearActuatorInterfaceCAN(
   pubRightJoystick_ = this->create_publisher<RightJoystick>(
     "right_joystick",
     rclcpp::SensorDataQoS());
+  pubFrontRightWheelEncoder_ = this->create_publisher<FrontRightWheelEncoder>(
+    "front_right_wheel_encoder", rclcpp::SensorDataQoS());
+  pubFrontLeftWheelEncoder_ = this->create_publisher<FrontLeftWheelEncoder>(
+    "front_left_wheel_encoder", rclcpp::SensorDataQoS());
+  pubRearAxleWheelEncoder_ = this->create_publisher<RearAxleWheelEncoder>(
+    "rear_axle_wheel_encoder",
+    rclcpp::SensorDataQoS());
 
   subBrakeControl_ = this->create_subscription<BrakeControl>(
     "brake_control",
@@ -106,6 +113,15 @@ void KartechLinearActuatorInterfaceCAN::recvCAN(const Frame::SharedPtr msg)
         break;
       case ID_RIGHT_JOYSTICK:
         RECV_DBC(recvRightJoystick);
+        break;
+      case ID_FRONT_RIGHT_WHEEL_ENCODER:
+        RECV_DBC(recvFrontRightWheelEncoder);
+        break;
+      case ID_FRONT_LEFT_WHEEL_ENCODER:
+        RECV_DBC(recvFrontLeftWheelEncoder);
+        break;
+      case ID_REAR_AXLE_WHEEL_ENCODER:
+        RECV_DBC(recvRearAxleWheelEncoder);
         break;
       default:
         break;
@@ -241,6 +257,42 @@ void KartechLinearActuatorInterfaceCAN::recvRightJoystick(
   out.right_button = message->GetSignal("Right_Button")->GetResult();
 
   pubRightJoystick_->publish(out);
+}
+
+void KartechLinearActuatorInterfaceCAN::recvFrontRightWheelEncoder(
+  const Frame::SharedPtr msg,
+  DbcMessage * message)
+{
+  FrontRightWheelEncoder out;
+  out.stamp = msg->header.stamp;
+
+  out.velocity = message->GetSignal("Velocity")->GetResult();
+
+  pubFrontRightWheelEncoder_->publish(out);
+}
+
+void KartechLinearActuatorInterfaceCAN::recvFrontLeftWheelEncoder(
+  const Frame::SharedPtr msg,
+  DbcMessage * message)
+{
+  FrontLeftWheelEncoder out;
+  out.stamp = msg->header.stamp;
+
+  out.velocity = message->GetSignal("Velocity")->GetResult();
+
+  pubFrontLeftWheelEncoder_->publish(out);
+}
+
+void KartechLinearActuatorInterfaceCAN::recvRearAxleWheelEncoder(
+  const Frame::SharedPtr msg,
+  DbcMessage * message)
+{
+  RearAxleWheelEncoder out;
+  out.stamp = msg->header.stamp;
+
+  out.velocity = message->GetSignal("Velocity")->GetResult();
+
+  pubRearAxleWheelEncoder_->publish(out);
 }
 
 }  // namespace kartech_linear_actuator_interface_can

@@ -91,6 +91,16 @@ BO_ 2365446196 Right_Joystick: 8 Vector__XXX
  SG_ Right_Joystick_Y : 16|16@1+ (1,0) [0|0] "" Vector__XXX
  SG_ Right_Button : 40|8@1+ (1,0) [0|0] "" Vector__XXX
 
+BO_ 1420 Front_Right_Wheel_Encoder: 8 Vector__XXX
+ SG_ Velocity : 32|16@1- (1,0) [-3200|3200] "" Vector__XXX
+
+BO_ 1440 Front_Left_Wheel_Encoder: 8 Vector__XXX
+ SG_ Velocity : 32|16@1- (1,0) [-3200|3200] "" Vector__XXX
+
+BO_ 1419 Rear_Axle_Wheel_Encoder: 8 Vector__XXX
+ SG_ Velocity : 32|16@1- (1,0) [-3200|3200] "" Vector__XXX
+
+
 CM_ SG_ 2164195328 Byte2 "Must be set to 0.";
 CM_ SG_ 2164195328 Byte3 "Must be set to 0.";
 VAL_ 2164195328 Byte2 0 "Default" ;

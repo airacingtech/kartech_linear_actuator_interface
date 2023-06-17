@@ -52,6 +52,9 @@
 #include "kartech_linear_actuator_interface_msgs/msg/heartbeat.hpp"
 #include "kartech_linear_actuator_interface_msgs/msg/left_joystick.hpp"
 #include "kartech_linear_actuator_interface_msgs/msg/right_joystick.hpp"
+#include "kartech_linear_actuator_interface_msgs/msg/front_right_wheel_encoder.hpp"
+#include "kartech_linear_actuator_interface_msgs/msg/front_left_wheel_encoder.hpp"
+#include "kartech_linear_actuator_interface_msgs/msg/rear_axle_wheel_encoder.hpp"
 
 #include "can_dbc_parser/DbcMessage.hpp"
 #include "can_dbc_parser/DbcSignal.hpp"
@@ -71,6 +74,9 @@ using kartech_linear_actuator_interface_msgs::msg::PwmFrequencyRequest;
 using kartech_linear_actuator_interface_msgs::msg::Heartbeat;
 using kartech_linear_actuator_interface_msgs::msg::LeftJoystick;
 using kartech_linear_actuator_interface_msgs::msg::RightJoystick;
+using kartech_linear_actuator_interface_msgs::msg::FrontRightWheelEncoder;
+using kartech_linear_actuator_interface_msgs::msg::FrontLeftWheelEncoder;
+using kartech_linear_actuator_interface_msgs::msg::RearAxleWheelEncoder;
 
 namespace kartech_linear_actuator_interface_can
 {
@@ -98,6 +104,9 @@ private:
   void recvHeartbeat(const Frame::SharedPtr msg, DbcMessage * message);
   void recvLeftJoystick(const Frame::SharedPtr msg, DbcMessage * message);
   void recvRightJoystick(const Frame::SharedPtr msg, DbcMessage * message);
+  void recvFrontRightWheelEncoder(const Frame::SharedPtr msg, DbcMessage * message);
+  void recvFrontLeftWheelEncoder(const Frame::SharedPtr msg, DbcMessage * message);
+  void recvRearAxleWheelEncoder(const Frame::SharedPtr msg, DbcMessage * message);
 
   void recvPwmFrequencyRequest(const PwmFrequencyRequest::SharedPtr msg);
 
@@ -119,6 +128,9 @@ private:
   rclcpp::Publisher<Heartbeat>::SharedPtr pubHeartbeat_;
   rclcpp::Publisher<LeftJoystick>::SharedPtr pubLeftJoystick_;
   rclcpp::Publisher<RightJoystick>::SharedPtr pubRightJoystick_;
+  rclcpp::Publisher<FrontRightWheelEncoder>::SharedPtr pubFrontRightWheelEncoder_;
+  rclcpp::Publisher<FrontLeftWheelEncoder>::SharedPtr pubFrontLeftWheelEncoder_;
+  rclcpp::Publisher<RearAxleWheelEncoder>::SharedPtr pubRearAxleWheelEncoder_;
   rclcpp::Publisher<Frame>::SharedPtr pub_can_;
 
   NewEagle::Dbc dbc_;
