@@ -29,7 +29,7 @@ BRAKE_POSITIONS_MINCH = np.array([0.925, 1.85, 1.9, 1.95, 2.0, 2.05, 2.1, 2.15, 
 # do this dynamically during callibration.
 # remove human in the loop to change the input position values for interpolation.
 
-BRAKE_POSITIONS_MINCH_CALIB = np.array([0.7, 1.0, 1.6, 1.9, 2.0, 2.15]) * 1000.0#, 2.7, 2.8, 2.9, 3.0]) * 1000.0
+BRAKE_POSITIONS_MINCH_CALIB = np.array([0.5, 0.7, 1.4, 1.45, 3.0]) * 1000.0#, 2.7, 2.8, 2.9, 3.0]) * 1000.0
 BRAKE_PRESSURE_KPA_CALIB = np.zeros(len(BRAKE_POSITIONS_MINCH_CALIB))
 
 # below 0.066: steady state error
@@ -89,6 +89,7 @@ class KartechLinearActuatorController(Node):
         self.calibration_timer = self.create_timer(3.0, self.on_calibration_timer)
 
         self.brake_pressure_kpa = None
+        self.brake_position = None
         self.analogx_brake_pressure_mv = None
         self.analogx_brake_pressure_kpa = None
         self.brake_request = None
@@ -163,7 +164,9 @@ class KartechLinearActuatorController(Node):
         msg = BrakeControl()
         msg.stamp = self.get_clock().now().to_msg()
         dpos_low, dpos_hi = self.split_brake_position(int(position))
-        motor_enable = 1 if self.brake_position.shaftextension - 500.0 < MAX_POSITION or position - 500.0 < MAX_POSITION else 0
+        motor_enable = 1
+        if self.brake_position != None:
+            motor_enable = 1 if self.brake_position.shaftextension - 500.0 < MAX_POSITION or position - 500.0 < MAX_POSITION else 0
         msg.position_command = 15
         msg.datatype = 10
         msg.autoreply_flag = 1
