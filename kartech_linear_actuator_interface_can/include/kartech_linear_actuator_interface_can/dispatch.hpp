@@ -36,13 +36,16 @@ namespace kartech_linear_actuator_interface_can
 enum ListMessageIDs
 {
   ID_BRAKE_CONTROL = 0xff0000,
-  ID_BRAKE_POSITION_REPORT = 0xff0201,
+  ID_BRAKE_POSITION_REPORT = 0xff0001,
   ID_KD_FREQ_DEADBAND_REQUEST = 0xff0000,
   ID_KP_KI_REQUEST = 0xff0000,
   ID_PWM_FREQUENCY_REQUEST = 0xff0000,
   ID_HEARTBEAT = 0xcfde801,
   ID_LEFT_JOYSTICK = 0xcfdd633,
   ID_RIGHT_JOYSTICK = 0xcfdd834,
+  ID_FRONT_RIGHT_WHEEL_ENCODER = 0x058c,
+  ID_FRONT_LEFT_WHEEL_ENCODER = 0x05a0,
+  ID_REAR_AXLE_WHEEL_ENCODER = 0x058b,
 };
 
 }  // namespace kartech_linear_actuator_interface_can

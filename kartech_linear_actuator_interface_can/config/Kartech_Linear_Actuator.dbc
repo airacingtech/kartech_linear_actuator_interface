@@ -38,7 +38,7 @@ BO_ 2164195328 Brake_Control: 8 Vector__XXX
  SG_ Motor_Enable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
  SG_ Clutch_Enable : 31|1@1+ (1,0) [0|0] "" Vector__XXX
 
-BO_ 16712193 Brake_Position_Report: 8 Vector__XXX
+BO_ 2164195329 Brake_Position_Report: 8 Vector__XXX
  SG_ ConfirmationFlag : 8|1@1+ (1,0) [0|0] "" Vector__XXX
  SG_ AutoReplyFlag : 9|1@1+ (1,0) [0|0] "" Vector__XXX
  SG_ DataType : 10|6@1+ (1,0) [0|0] "" Vector__XXX
@@ -90,6 +90,16 @@ BO_ 2365446196 Right_Joystick: 8 Vector__XXX
  SG_ Right_Joystick_X : 0|16@1+ (1,0) [0|0] "" Vector__XXX
  SG_ Right_Joystick_Y : 16|16@1+ (1,0) [0|0] "" Vector__XXX
  SG_ Right_Button : 40|8@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 1420 Front_Right_Wheel_Encoder: 8 Vector__XXX
+ SG_ Velocity : 32|16@1- (1,0) [-3200|3200] "" Vector__XXX
+
+BO_ 1440 Front_Left_Wheel_Encoder: 8 Vector__XXX
+ SG_ Velocity : 32|16@1- (1,0) [-3200|3200] "" Vector__XXX
+
+BO_ 1419 Rear_Axle_Wheel_Encoder: 8 Vector__XXX
+ SG_ Velocity : 32|16@1- (1,0) [-3200|3200] "" Vector__XXX
+
 
 CM_ SG_ 2164195328 Byte2 "Must be set to 0.";
 CM_ SG_ 2164195328 Byte3 "Must be set to 0.";

@@ -30,7 +30,7 @@ import pwlf
 # BRAKE_POSITIONS_MINCH = np.array([0.925, 1.85, 1.9, 1.95, 2.0, 2.05, 2.1, 2.15, 2.2, 2.25, 2.3, 2.35]) * 1000.0
 
 # Max Stroke: 3.125"
-BRAKE_MAX_POSITION = (3.125 - 0.5) * 1000.0
+BRAKE_MAX_POSITION = (3.0 - 0.5) * 1000.0
 BRAKE_MIN_POSITION = (0.55 - 0.5) * 1000.0
 
 BRAKE_THRESHOLD = 0.98 * BRAKE_MAX_POSITION
@@ -39,7 +39,7 @@ X_POSITION = []
 Y_PRESSURE = []
 X_VELOCITY = []
 
-ENABLE_VIZ = False
+ENABLE_VIZ = True
 
 # Max Stroke: 3.125"
 
