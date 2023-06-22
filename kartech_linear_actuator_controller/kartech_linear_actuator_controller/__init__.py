@@ -19,7 +19,7 @@ RAPTOR_BRAKE_REQ_MAX = 2000
 
 BRAKE_PRESSURE_MV = np.array([440.0, 535.0, 540.0, 570.0, 620.0, 760.0, 900.0, 1050.0, 1260.0, 1460.0, 1640.0, 1920.0])
 BRAKE_PRESSURE_KPA = (0.5672 * BRAKE_PRESSURE_MV - 246.6) * 6.89476
-BRAKE_POSITIONS_MINCH = np.array([0.925, 1.85, 1.9, 1.95, 2.0, 2.05, 2.1, 2.15, 2.2, 2.25, 2.3, 2.35]) * 1000.0
+BRAKE_POSITIONS_MINCH = np.array([0.925, 1.85, 1.95, 2.0, 2.1, 2.15, 2.2, 2.25, 2.3, 2.35]) * 1000.0
 
 # Max Stroke: 3.125"
 # wave through entire range, collect pressure data
@@ -29,7 +29,7 @@ BRAKE_POSITIONS_MINCH = np.array([0.925, 1.85, 1.9, 1.95, 2.0, 2.05, 2.1, 2.15, 
 # do this dynamically during callibration.
 # remove human in the loop to change the input position values for interpolation.
 
-BRAKE_POSITIONS_MINCH_CALIB = np.array([0.5, 0.7, 1.4, 1.45, 3.0]) * 1000.0#, 2.7, 2.8, 2.9, 3.0]) * 1000.0
+BRAKE_POSITIONS_MINCH_CALIB = np.array([0.0, 0.2, 0.7, 1.2, 1.6, 1.7, 1.75, 1.8, 1.85, 1.9, 1.95, 2.0, 2.05,  2.1, 2.15, 2.2, 2.3, 2.4]) * 1000.0#, 2.7, 2.8, 2.9, 3.0]) * 1000.0
 BRAKE_PRESSURE_KPA_CALIB = np.zeros(len(BRAKE_POSITIONS_MINCH_CALIB))
 
 # below 0.066: steady state error
