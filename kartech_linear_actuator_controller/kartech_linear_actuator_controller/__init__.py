@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32MultiArray
 
 from scipy.interpolate import UnivariateSpline, InterpolatedUnivariateSpline
 import numpy as np
@@ -66,6 +66,8 @@ class KartechLinearActuatorController(Node):
         super().__init__('kartech_linear_actuator_controller')
         self.brake_control_publisher_ = self.create_publisher(BrakeControl, '/kartech_linear_actuator_interface_interface/brake_control', qos_profile_sensor_data)
         self.brake_deadband_publisher_ = self.create_publisher(KdFreqDeadbandRequest, '/kartech_linear_actuator_interface_interface/kd_freq_deadband_request', qos_profile_sensor_data)
+        self.brake_telemetry_publisher_ = self.create_publisher(Float32MultiArray, '/brake_control/telemetry', qos_profile_sensor_data)
+
         self.brake_request_subscriber_ = self.create_subscription(
             AkitBrakerequest,
             '/raptor_dbw_interface/akit_brakerequest',
@@ -146,6 +148,9 @@ class KartechLinearActuatorController(Node):
         position = fdfw_position + fdbk_position
         print(self.analogx_brake_pressure_kpa, brake_req_kpa, position)
         print(f"kpa: {self.analogx_brake_pressure_kpa}, brake_request_kpa: {brake_req_kpa}, position: {position}")
+        brake_tlm_msg = Float32MultiArray()
+        brake_tlm_msg.data = [float(self.analogx_brake_pressure_kpa), float(brake_req_kpa), float(position), float(self.brake_position.shaftextension - 500)]
+        self.brake_telemetry_publisher_.publish(brake_tlm_msg)
         self.send_brake_position(position)
 
     def brake_pressure_sensor_callback(self, brake_pressure_sensor):
