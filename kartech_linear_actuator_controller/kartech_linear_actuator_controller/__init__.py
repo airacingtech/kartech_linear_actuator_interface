@@ -39,7 +39,7 @@ X_POSITION = []
 Y_PRESSURE = []
 X_VELOCITY = []
 
-ENABLE_VIZ = True
+ENABLE_VIZ = False
 
 # Max Stroke: 3.125"
 
