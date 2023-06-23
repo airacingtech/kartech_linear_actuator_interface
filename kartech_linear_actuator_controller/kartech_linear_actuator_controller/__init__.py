@@ -48,7 +48,7 @@ ENABLE_VIZ = True
 
 # below 0.066: steady state error
 # above 0.066: oscilation
-K = 0.02
+K = 0.01
 
 DEADBAND = 5
 
