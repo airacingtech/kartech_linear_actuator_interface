@@ -30,8 +30,8 @@ import pwlf
 # BRAKE_POSITIONS_MINCH = np.array([0.925, 1.85, 1.9, 1.95, 2.0, 2.05, 2.1, 2.15, 2.2, 2.25, 2.3, 2.35]) * 1000.0
 
 # Max Stroke: 3.125"
-BRAKE_MAX_POSITION = (3.0 - 0.5) * 1000.0
-BRAKE_MIN_POSITION = (0.55 - 0.5) * 1000.0
+BRAKE_MAX_POSITION = (2.65 - 0.5) * 1000.0
+BRAKE_MIN_POSITION = (0.5 - 0.5) * 1000.0
 
 BRAKE_THRESHOLD = 0.98 * BRAKE_MAX_POSITION
 
@@ -135,6 +135,9 @@ class KartechLinearActuatorController(Node):
         if self.brake_request is None:
             return
         brake_req_kpa = self.brake_request.akit_brakepedalreq
+        if brake_req_kpa == 0:
+            self.send_brake_position(0.0)
+            return
         # position = self.linear_map(brake_request.akit_brakepedalreq, RAPTOR_BRAKE_REQ_MIN, RAPTOR_BRAKE_REQ_MAX, BRAKE_MIN, BRAKE_MAX)
         # fdfw_position = self.kpa_to_minch_lookup(brake_req_kpa)
         # fdfw_position = np.interp(brake_req_kpa, BRAKE_PRESSURE_KPA_CALIB, BRAKE_POSITIONS_MINCH_CALIB)
