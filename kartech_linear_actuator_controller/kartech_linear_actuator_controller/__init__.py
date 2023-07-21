@@ -31,7 +31,7 @@ import pwlf
 
 # Max Stroke: 3.125"
 BRAKE_MAX_POSITION = (3.1 - 0.5) * 1000.0
-BRAKE_MIN_POSITION = (0.95 - 0.5) * 1000.0
+BRAKE_MIN_POSITION = (0.55 - 0.5) * 1000.0
 
 BRAKE_THRESHOLD = 0.98 * BRAKE_MAX_POSITION
 
@@ -50,7 +50,7 @@ ENABLE_VIZ = True
 # above 0.066: oscilation
 K = 0.01
 
-DEADBAND = 5
+DEADBAND = 10
 
 # deadband command
 # ros2 topic pub /kartech_linear_actuator_interface_interface/kd_freq_deadband_request kartech_linear_actuator_interface_msgs/msg/KdFreqDeadbandRequest 
@@ -81,11 +81,6 @@ class KartechLinearActuatorController(Node):
             BrakePositionReport,
             '/kartech_linear_actuator_interface_interface/brake_position_report',
             self.brake_position_report_callback,
-            qos_profile_sensor_data)
-        self.analogx_brake_pressure_subscriber_ = self.create_subscription(
-            Analogx1,
-            '/analogx_interface_interface/analogx1',
-            self.analogx_sensor_callback,
             qos_profile_sensor_data)
         self.analogx_brake_pressure_subscriber_ = self.create_subscription(
             Analogx1,
@@ -128,7 +123,7 @@ class KartechLinearActuatorController(Node):
         if self.estop_override:
             # E-Stop
             print("Estop activated")
-            self.send_brake_position(BRAKE_MAX_POSITION)
+            # self.send_brake_position(BRAKE_MAX_POSITION) # handled in the raptor
             return
         if not self.brakeModel.calibrated and self.calibration_brake_position is not None:
             # Calibration Mode
@@ -144,14 +139,13 @@ class KartechLinearActuatorController(Node):
         # fdfw_position = np.interp(brake_req_kpa, BRAKE_PRESSURE_KPA_CALIB, BRAKE_POSITIONS_MINCH_CALIB)
         fdfw_position = self.brakeModel.pressureToPosition(brake_req_kpa)
         fdbk_position = 0.0
-        if self.analogx_brake_pressure_kpa is not None:
-            fdbk_position = (brake_req_kpa - self.analogx_brake_pressure_kpa) * K 
-            print(f"feedback position: {fdbk_position}")
-        else:
-            fdbk_position = 0.0
+        # if self.analogx_brake_pressure_kpa is not None:
+        #     fdbk_position = (brake_req_kpa - self.analogx_brake_pressure_kpa) * K 
+        #     print(f"feedback position: {fdbk_position}")
+        # else:
+        #     fdbk_position = 0.0
         position = fdfw_position + fdbk_position
-        print(self.analogx_brake_pressure_kpa, brake_req_kpa, position)
-        print(f"kpa: {self.analogx_brake_pressure_kpa}, brake_request_kpa: {brake_req_kpa}, position: {position}")
+        print(f"kpa: {self.analogx_brake_pressure_kpa}, brake_request_kpa: {brake_req_kpa}, position: {position + 500}, actual_position: {self.brake_position.shaftextension}")
         brake_tlm_msg = Float32MultiArray()
         brake_tlm_msg.data = [float(self.analogx_brake_pressure_kpa), float(brake_req_kpa), float(position), float(self.brake_position.shaftextension - 500)]
         self.brake_telemetry_publisher_.publish(brake_tlm_msg)
@@ -187,7 +181,8 @@ class KartechLinearActuatorController(Node):
         brake_position_report_in_range = self.brake_position.shaftextension - 500.0 > BRAKE_MIN_POSITION and self.brake_position.shaftextension - 500.0 < BRAKE_THRESHOLD 
         brake_position_request_gradient_in_range = (position - self.brake_position.shaftextension > 0 and self.brake_position.shaftextension - 500.0 < BRAKE_THRESHOLD) or (position - self.brake_position.shaftextension < 0 and self.brake_position.shaftextension - 500.0 > BRAKE_MIN_POSITION)
         dpos_low, dpos_hi = self.split_brake_position(int(position))
-        motor_enable = 1 if brake_position_report_in_range or brake_position_request_gradient_in_range or not self.brakeModel.calibrated else 0
+        # motor_enable = 1 if brake_position_report_in_range or brake_position_request_gradient_in_range or not self.brakeModel.calibrated else 0
+        motor_enable = 1 if self.motorEnable(position, self.brake_position.shaftextension - 500.0, BRAKE_THRESHOLD) or not self.brakeModel.calibrated else 0
         msg.position_command = 15
         msg.datatype = 10
         msg.autoreply_flag = 1
@@ -197,6 +192,14 @@ class KartechLinearActuatorController(Node):
         msg.motor_enable = motor_enable
         msg.clutch_enable = 1
         self.brake_control_publisher_.publish(msg)
+
+    def motorEnable(self, brakeRequest, brakePosition, threshold):
+        min_threshold = (1.55 - 0.5) * 1000.0
+        if brakePosition < min_threshold:
+            return brakeRequest > min_threshold
+        elif brakePosition > threshold:
+            return brakeRequest < threshold
+        return True
     
     def split_brake_position(self, position):
         dpos_low = position & 0x00FF
@@ -271,6 +274,8 @@ class BrakeModel:
             position = position * self.scale_factor
         elif self._model == self.models["piecewise linear curve"]:
             position = self.inverse_piecewise_linear_curve.predict(pressure)
+            # if position < BRAKE_MIN_POSITION:
+            #     position = BRAKE_MIN_POSITION
         return position
     
     def calibrate(self, positions, pressures, velocities, enable_visualization=False):
@@ -278,7 +283,7 @@ class BrakeModel:
         self.max_position = max(positions)
         self.min_pressure = min(pressures)
         self.max_pressure = max(pressures)
-        # TOOD: record velocity differential
+        # TODO: record velocity differential
         if self._model == self.models["sigmoid"]:
             self.calibrateSigmoid(positions, pressures, ENABLE_VIZ)
         else:
