@@ -29,7 +29,7 @@ BRAKE_POSITIONS_MINCH = np.array([0.925, 1.85, 1.95, 2.0, 2.1, 2.15, 2.2, 2.25, 
 # do this dynamically during callibration.
 # remove human in the loop to change the input position values for interpolation.
 
-BRAKE_POSITIONS_MINCH_CALIB = np.array([0.0, 0.7, 1.6, 1.7, 1.8, 1.85, 1.9, 1.95, 2.0]) * 1000.0#, 2.7, 2.8, 2.9, 3.0]) * 1000.0
+BRAKE_POSITIONS_MINCH_CALIB = np.array([0.1, 0.7, 1.6, 1.7, 1.8, 1.85, 1.9, 2.0]) * 1000.0#, 2.7, 2.8, 2.9, 3.0]) * 1000.0
 BRAKE_PRESSURE_KPA_CALIB = np.zeros(len(BRAKE_POSITIONS_MINCH_CALIB))
 
 # below 0.066: steady state error
@@ -98,6 +98,7 @@ class KartechLinearActuatorController(Node):
         self.calibration_read_idx = -1
         self.calibration_send_idx = 0
         self.callibration_brake_position = None
+        self.first_time_zero = True
 
         self.send_deadband(DEADBAND)
     
@@ -110,6 +111,7 @@ class KartechLinearActuatorController(Node):
     def brake_control_callback(self):
         if self.estop_override:
             # E-Stop
+            print("Estop activated")
             self.send_brake_position(MAX_POSITION)
             return
         if not self.calibrated and self.callibration_brake_position is not None:
@@ -121,8 +123,11 @@ class KartechLinearActuatorController(Node):
         if self.brake_request is None:
             return
         if self.brake_request.akit_brakepedalreq == 0:
-            self.send_brake_position(-500)
+            if self.first_time_zero:
+                self.first_time_zero = False
+                self.send_brake_position(0)
             return
+        self.first_time_zero = True
         brake_req_kpa = self.brake_request.akit_brakepedalreq
         # position = self.linear_map(brake_request.akit_brakepedalreq, RAPTOR_BRAKE_REQ_MIN, RAPTOR_BRAKE_REQ_MAX, BRAKE_MIN, BRAKE_MAX)
         # fdfw_position = self.kpa_to_minch_lookup(brake_req_kpa)
