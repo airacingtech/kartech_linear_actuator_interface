@@ -66,8 +66,7 @@ class KartechLinearActuatorController(Node):
         super().__init__('kartech_linear_actuator_controller')
         self.brake_control_publisher_ = self.create_publisher(BrakeControl, '/kartech_linear_actuator_interface_interface/brake_control', qos_profile_sensor_data)
         self.brake_deadband_publisher_ = self.create_publisher(KdFreqDeadbandRequest, '/kartech_linear_actuator_interface_interface/kd_freq_deadband_request', qos_profile_sensor_data)
-        self.brake_telemetry_publisher_ = self.create_publisher(Float32MultiArray, '/brake_control/telemetry', qos_profile_sensor_data)
-
+        
         self.brake_request_subscriber_ = self.create_subscription(
             AkitBrakerequest,
             '/raptor_dbw_interface/akit_brakerequest',
@@ -98,6 +97,10 @@ class KartechLinearActuatorController(Node):
             '/kartech_linear_actuator_interface_interface/heartbeat',
             self.estop_callback,
             qos_profile_sensor_data)
+        self.brake_telemetry_publisher_ = self.create_publisher(
+            Float32MultiArray, 
+            '/brake_control/telemetry', 
+            qos_profile_sensor_data)
 
         self.brake_control_timer = self.create_timer(0.01, self.brake_control_callback)
         self.calibration_timer = self.create_timer(0.05, self.on_calibration_timer)
@@ -124,6 +127,7 @@ class KartechLinearActuatorController(Node):
     def brake_control_callback(self):
         if self.estop_override:
             # E-Stop
+            print("Estop activated")
             self.send_brake_position(BRAKE_MAX_POSITION)
             return
         if not self.brakeModel.calibrated and self.calibration_brake_position is not None:
