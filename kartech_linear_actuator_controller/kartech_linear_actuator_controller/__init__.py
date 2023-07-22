@@ -61,6 +61,9 @@ DEADBAND = 10
 #    '{position_command: 15, datatype: 10, autoreply_flag: 1, confirmation_flag: 0, dpos_low: 196, dpos_hi: 201, motor_enable: 1, clutch_enable: 1}'
 
 class KartechLinearActuatorController(Node):
+    # TODO: subscribe to autonomous heart beat, only control brake when in autonomous mode.
+    # TODO: make sure this is autonomous mode, otherwise the raptor will send brake commands to the kartech.
+    # TODO: why does the steering not work with ebrake on? 
 
     def __init__(self):
         super().__init__('kartech_linear_actuator_controller')
@@ -122,7 +125,7 @@ class KartechLinearActuatorController(Node):
     def brake_control_callback(self):
         if self.estop_override:
             # E-Stop
-            print("Estop activated")
+            # print("Estop activated")
             # self.send_brake_position(BRAKE_MAX_POSITION) # handled in the raptor
             return
         if not self.brakeModel.calibrated and self.calibration_brake_position is not None:
@@ -145,7 +148,7 @@ class KartechLinearActuatorController(Node):
         # else:
         #     fdbk_position = 0.0
         position = fdfw_position + fdbk_position
-        print(f"kpa: {self.analogx_brake_pressure_kpa}, brake_request_kpa: {brake_req_kpa}, position: {position + 500}, actual_position: {self.brake_position.shaftextension}")
+        # print(f"kpa: {self.analogx_brake_pressure_kpa}, brake_request_kpa: {brake_req_kpa}, position: {position + 500}, actual_position: {self.brake_position.shaftextension}")
         brake_tlm_msg = Float32MultiArray()
         brake_tlm_msg.data = [float(self.analogx_brake_pressure_kpa), float(brake_req_kpa), float(position), float(self.brake_position.shaftextension - 500)]
         self.brake_telemetry_publisher_.publish(brake_tlm_msg)
@@ -215,7 +218,7 @@ class KartechLinearActuatorController(Node):
         data on the relationship of brake position and pressure and fits a regressional sigmoid 
         parent function.
         """
-        T = 10.0
+        T = 30.0
         stamp = self.get_clock().now().to_msg()
         if self.calibration_brake_position is None:
             self.calibration_start_time = stamp.sec + (stamp.nanosec / 1e9)
