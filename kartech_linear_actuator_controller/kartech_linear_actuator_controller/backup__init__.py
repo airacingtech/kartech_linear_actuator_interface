@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
-from std_msgs.msg import String, Float32MultiArray
+from std_msgs.msg import String
 
 from scipy.interpolate import UnivariateSpline, InterpolatedUnivariateSpline
 import numpy as np
@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 from kartech_linear_actuator_interface_msgs.msg import BrakeControl, BrakePositionReport, KdFreqDeadbandRequest, Heartbeat, LeftJoystick, RightJoystick
-from raptor_dbw_msgs.msg import AkitBrakerequest, BrakePressureReport, AkitGlobalenbl, DbwBrakereport
+from raptor_dbw_msgs.msg import AkitBrakerequest, BrakePressureReport, DbwBrakereport
 from analogx_interface_msgs.msg import Analogx1, BrakeSensorBodyTemp, BrakeTemp
 
 from sklearn.preprocessing import MinMaxScaler
@@ -20,28 +20,26 @@ import pwlf
 # TODO: get the variance of the pressure sensor.
 # TODO: get covariance for each pressure prediction
 
-# BRAKE_MIN = 550
-# BRAKE_MAX = 2000
-# RAPTOR_BRAKE_REQ_MIN = 0
-# RAPTOR_BRAKE_REQ_MAX = 2000
+BRAKE_MIN = 550
+BRAKE_MAX = 2000
+RAPTOR_BRAKE_REQ_MIN = 550
+RAPTOR_BRAKE_REQ_MAX = 2000
 
 # BRAKE_PRESSURE_MV = np.array([440.0, 535.0, 540.0, 570.0, 620.0, 760.0, 900.0, 1050.0, 1260.0, 1460.0, 1640.0, 1920.0])
 # BRAKE_PRESSURE_KPA = (0.5672 * BRAKE_PRESSURE_MV - 246.6) * 6.89476
 # BRAKE_POSITIONS_MINCH = np.array([0.925, 1.85, 1.9, 1.95, 2.0, 2.05, 2.1, 2.15, 2.2, 2.25, 2.3, 2.35]) * 1000.0
 
 # Max Stroke: 3.125"
-BRAKE_MAX_POSITION = (3.1 - 0.5) * 1000.0
-BRAKE_MIN_POSITION = (0.55 - 0.5) * 1000.0
+# BRAKE_MAX_POSITION = (3.125 - 0.5) * 1000.0
+# BRAKE_MIN_POSITION = (0.55 - 0.5) * 1000.0
+BRAKE_MAX_POSITION = 2000
+BRAKE_MIN_POSITION = 550
 
-BRAKE_THRESHOLD = 0.98 * BRAKE_MAX_POSITION
+# BRAKE_THRESHOLD = 0.98 * BRAKE_MAX_POSITION
 
 X_POSITION = []
 Y_PRESSURE = []
 X_VELOCITY = []
-
-ENABLE_VIZ = True
-
-BRAKE_OFFSET_KPA = 500
 
 # Max Stroke: 3.125"
 
@@ -50,7 +48,9 @@ BRAKE_OFFSET_KPA = 500
 
 # below 0.066: steady state error
 # above 0.066: oscilation
-K = 0.01
+K = 0.02
+
+# DEADBAND = 5
 
 # deadband command
 # ros2 topic pub /kartech_linear_actuator_interface_interface/kd_freq_deadband_request kartech_linear_actuator_interface_msgs/msg/KdFreqDeadbandRequest 
@@ -61,22 +61,13 @@ K = 0.01
 #    '{position_command: 15, datatype: 10, autoreply_flag: 1, confirmation_flag: 0, dpos_low: 196, dpos_hi: 201, motor_enable: 1, clutch_enable: 1}'
 
 class KartechLinearActuatorController(Node):
-    # TODO: subscribe to autonomous heart beat, only control brake when in autonomous mode.
-    # TODO: make sure this is autonomous mode, otherwise the raptor will send brake commands to the kartech.
-    # TODO: why does the steering not work with ebrake on? 
 
     def __init__(self):
         super().__init__('kartech_linear_actuator_controller')
-        # Publishers
         self.brake_control_publisher_ = self.create_publisher(
             AkitBrakerequest, 
             '/raptor_dbw_interface/akit_brakerequest', 
             qos_profile_sensor_data)
-        self.brake_telemetry_publisher_ = self.create_publisher(
-            Float32MultiArray, 
-            '/brake_control/telemetry',
-            qos_profile_sensor_data)
-        # Subscribers
         self.brake_position_report_subscriber_ = self.create_subscription(
             DbwBrakereport,
             '/raptor_dbw_interface/dbw_brakereport',
@@ -87,119 +78,80 @@ class KartechLinearActuatorController(Node):
             '/raptor_dbw_interface/brake_pressure_report',
             self.brake_pressure_sensor_callback,
             qos_profile_sensor_data)
-        # TODO (github/jimenezjose): Remove AnalogX dependency.
         self.analogx_brake_pressure_subscriber_ = self.create_subscription(
             Analogx1,
             '/analogx_interface_interface/analogx1',
             self.analogx_sensor_callback,
             qos_profile_sensor_data)
-        self.estop_subscriber_ = self.create_subscription(
-            Heartbeat,
-            '/kartech_linear_actuator_interface_interface/heartbeat',
-            self.estop_callback,
-            qos_profile_sensor_data)
-        self.autonomous_heartbeat_subscriber_= self.create_subscription(
-                AkitGlobalenbl,
-                '/raptor_dbw_interface/akit_globalenbl',
-                self.autonomous_heartbeat_callback,
-                qos_profile_sensor_data)
-        # Temp
-        self.rvc_subscriber_ = self.create_subscription(
-            AkitBrakerequest,
-            '/temp/raptor_dbw_interface/akit_brakerequest',
-            self.brake_request_callback,
-            qos_profile_sensor_data)
-        
 
         self.brake_control_timer = self.create_timer(0.01, self.brake_control_callback)
         self.calibration_timer = self.create_timer(0.05, self.on_calibration_timer)
 
         self.brake_pressure_kpa = None
+        self.analogx_brake_pressure_mv = None
         self.analogx_brake_pressure_kpa = None
+        
         self.brake_request = None
-        self.estop_override = False
         self.calibration_brake_position = None
         self.calibration_start_time = 0
+        # self.previous_shaftextension = 0
         self.previous_dbw_brakepdlposnfdbck = 0
-        self.is_autonomous = False
 
         self.brakeModel = BrakeModel()
-
-    def autonomous_heartbeat_callback(self, autonomous_heartbeat):
-        self.is_autonomous = bool(autonomous_heartbeat.akit_globalbywireenblreq)
-
-    def estop_callback(self, estop_request):
-        self.estop_override = bool(estop_request.e_stop_indication)
 
     def brake_request_callback(self, brake_request):
         self.brake_request = brake_request
 
-    def brake_position_report_callback(self, brake_position_report):
-        self.brake_position = brake_position_report
-    
     def brake_pressure_sensor_callback(self, brake_pressure_sensor):
-        # TODO (github/jimenezjose): Read kpa directly from the raptor.
-        brake_pressure_mv = brake_pressure_sensor.brake_pressure_fdbk_front
+        brake_pressure_mv = brake_pressure_sensor.brake_pressure_fdbk_rear
         self.brake_pressure_kpa = (0.5672 * brake_pressure_mv - 246.6) * 6.89476
 
     def analogx_sensor_callback(self, analogx_sensor):
-        analogx_brake_pressure_mv = analogx_sensor.brake_pressure
-        self.analogx_brake_pressure_kpa = (0.5672 * analogx_brake_pressure_mv - 246.6) * 6.89476
+        self.analogx_brake_pressure_mv = analogx_sensor.brake_pressure
+        self.analogx_brake_pressure_kpa = (0.5672 * self.analogx_brake_pressure_mv - 246.6) * 6.89476
+    
+    def brake_position_report_callback(self, brake_position_report):
+        self.brake_position = brake_position_report
+
 
     def brake_control_callback(self):
-        if self.estop_override:
-            # E-Stop
-            # print("Estop activated")
-            # self.send_brake_position(BRAKE_MAX_POSITION) # handled in the raptor
-            return
-        if not self.is_autonomous:
-            return
         if not self.brakeModel.calibrated and self.calibration_brake_position is not None:
             # Calibration Mode
             self.send_brake_position(self.calibration_brake_position)
             return
-        if not self.brakeModel.calibrated:
-            return
         if self.brake_request is None:
             return
         brake_req_kpa = self.brake_request.akit_brakepedalreq
-        # position = self.linear_map(brake_request.akit_brakepedalreq, RAPTOR_BRAKE_REQ_MIN, RAPTOR_BRAKE_REQ_MAX, BRAKE_MIN, BRAKE_MAX)
+        position = self.linear_map(brake_req_kpa, RAPTOR_BRAKE_REQ_MIN, RAPTOR_BRAKE_REQ_MAX, BRAKE_MIN, BRAKE_MAX)
         # fdfw_position = self.kpa_to_minch_lookup(brake_req_kpa)
         # fdfw_position = np.interp(brake_req_kpa, BRAKE_PRESSURE_KPA_CALIB, BRAKE_POSITIONS_MINCH_CALIB)
-        fdfw_position = self.brakeModel.pressureToPosition(brake_req_kpa + BRAKE_OFFSET_KPA)
-        fdbk_position = 0.0
+        # fdfw_position = self.brakeModel.pressureToPosition(brake_req_kpa)
+        # fdbk_position = 0.0
         # if self.analogx_brake_pressure_kpa is not None:
         #     fdbk_position = (brake_req_kpa - self.analogx_brake_pressure_kpa) * K 
         #     print(f"feedback position: {fdbk_position}")
         # else:
         #     fdbk_position = 0.0
-        position = fdfw_position + fdbk_position
-        # print(f"kpa: {self.analogx_brake_pressure_kpa}, brake_request_kpa: {brake_req_kpa}, position: {position + 500}, actual_position: {self.brake_position.shaftextension}")
-        brake_tlm_msg = Float32MultiArray()
-        brake_tlm_msg.data = [float(self.analogx_brake_pressure_kpa), float(brake_req_kpa), float(position), float(self.brake_position.shaftextension - 500)]
-        self.brake_telemetry_publisher_.publish(brake_tlm_msg)
+        # position = fdfw_position + fdbk_position
+        print(f"kpa: {self.brake_pressure_kpa}, kpa: {self.analogx_brake_pressure_kpa}, brake_request_kpa: {brake_req_kpa}, position: {position}")
         self.send_brake_position(position)
-
+    
     def send_brake_position(self, position):
         msg = AkitBrakerequest()
         msg.stamp = self.get_clock().now().to_msg()
-        position += 500.0
         msg.akit_brakepedalreq = position
         self.brake_control_publisher_.publish(msg)
     
     def linear_map(self, x, x_min, x_max, y_min, y_max):
         return (x - x_min) * (y_max - y_min) / (x_max - x_min) + y_min
-
+    
     def on_calibration_timer(self):
         """ 
         Brake calibration uses a sine wave actuation with a period of 10 seconds that collects
-        data on the relationship of brake position and pressure and fits a regressional piecewise
-        linear curve.
+        data on the relationship of brake position and pressure and fits a regressional piecewise 
+        function.
         """
-        # TODO (github/jimenezjose): Allow callibration to have priveleged control of the brake (past the thresholds).
-        if not self.is_autonomous:
-            return
-        T = 30.0
+        T = 10.0
         stamp = self.get_clock().now().to_msg()
         if self.calibration_brake_position is None:
             self.calibration_start_time = stamp.sec + (stamp.nanosec / 1e9)
@@ -213,26 +165,24 @@ class KartechLinearActuatorController(Node):
         if self.brake_position.dbw_brakepdlposnfdbck is not None and self.analogx_brake_pressure_kpa is not None:
             if self.brake_position.dbw_brakepdlposnfdbck < 500.0:
                 return
-            X_POSITION.append(self.brake_position.dbw_brakepdlposnfdbck - 500.0)
+            X_POSITION.append(self.brake_position.dbw_brakepdlposnfdbck)
             Y_PRESSURE.append(self.analogx_brake_pressure_kpa)
             X_VELOCITY.append(self.brake_position.dbw_brakepdlposnfdbck - self.previous_dbw_brakepdlposnfdbck)
-            print(f"position: {self.brake_position.dbw_brakepdlposnfdbck - 500.0}, pressure: {self.analogx_brake_pressure_kpa}, velocity: {self.brake_position.dbw_brakepdlposnfdbck - self.previous_dbw_brakepdlposnfdbck}")
+            print(f"[{t:.2f}] request: {self.calibration_brake_position:.2f}, position: {self.brake_position.dbw_brakepdlposnfdbck}, pressure: {self.analogx_brake_pressure_kpa}, velocity: {self.brake_position.dbw_brakepdlposnfdbck - self.previous_dbw_brakepdlposnfdbck}")
             self.previous_dbw_brakepdlposnfdbck = self.brake_position.dbw_brakepdlposnfdbck
 
-        if len(X_POSITION) >  T / (self.calibration_timer.timer_period_ns / 1e9):
+        if len(X_POSITION) >  T / (self.calibration_timer.timer_period_ns / 1e9) / 2:
             positions = X_POSITION
             pressures = Y_PRESSURE
             velocities = X_VELOCITY
-            self.brakeModel.calibrate(positions, pressures, velocities, enable_visualization=ENABLE_VIZ)
+            self.brakeModel.calibrate(positions, pressures, velocities, enable_visualization=True)
             self.calibration_timer.cancel()
 
 class BrakeModel:
-    # TODO (github/jimenezjose): Modularize the BrakeModel in a seperate file.
     def __init__(self):
         self.models = {"sigmoid": 0, "piecewise linear curve": 1}
         self._model = self.models["piecewise linear curve"]
         self._calibrated = False
-        self.calibrated = False
         self.scale_factor = 1000000.0
         self.min_position = None
         self.max_position = None
@@ -259,8 +209,6 @@ class BrakeModel:
             position = position * self.scale_factor
         elif self._model == self.models["piecewise linear curve"]:
             position = self.inverse_piecewise_linear_curve.predict(pressure)
-            # if position < BRAKE_MIN_POSITION:
-            #     position = BRAKE_MIN_POSITION
         return position
     
     def calibrate(self, positions, pressures, velocities, enable_visualization=False):
@@ -268,11 +216,11 @@ class BrakeModel:
         self.max_position = max(positions)
         self.min_pressure = min(pressures)
         self.max_pressure = max(pressures)
-        # TODO: record velocity differential
+        # TOOD: record velocity differential
         if self._model == self.models["sigmoid"]:
-            self.calibrateSigmoid(positions, pressures, ENABLE_VIZ)
+            self.calibrateSigmoid(positions, pressures, enable_visualization)
         else:
-            self.calibratePieceWiseLinearCurve(positions, pressures, ENABLE_VIZ)
+            self.calibratePieceWiseLinearCurve(positions, pressures, enable_visualization)
 
     def calibratePieceWiseLinearCurve(self, positions, pressures, enable_visualization=False):
         X = np.array(positions)
@@ -281,8 +229,6 @@ class BrakeModel:
         self.piece_wise_linear_curve.fit(4)
         self.inverse_piecewise_linear_curve = pwlf.PiecewiseLinFit(self.piece_wise_linear_curve.predict(self.piece_wise_linear_curve.fit_breaks), self.piece_wise_linear_curve.fit_breaks)
         self.inverse_piecewise_linear_curve.fit_with_breaks(self.piece_wise_linear_curve.predict(self.piece_wise_linear_curve.fit_breaks))
-        print(self.piece_wise_linear_curve.fit_breaks)
-        print(self.piece_wise_linear_curve.predict(self.piece_wise_linear_curve.fit_breaks))
         if enable_visualization:
             plt.figure(1)
             u = np.linspace(min(X), max(X), num=10000)
@@ -303,7 +249,7 @@ class BrakeModel:
             plt.ylabel("Position")
             plt.title("Inverse Piecewise Linear Curve")
             plt.show()
-            #  plt.show(block=False)
+            # plt.show(block=False)
         self.calibrated = True
 
     def calibrateSigmoid(self, positions, pressures, enable_visualization=False):

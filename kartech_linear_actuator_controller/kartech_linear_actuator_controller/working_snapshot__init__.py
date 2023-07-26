@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 from kartech_linear_actuator_interface_msgs.msg import BrakeControl, BrakePositionReport, KdFreqDeadbandRequest, Heartbeat, LeftJoystick, RightJoystick
-from raptor_dbw_msgs.msg import AkitBrakerequest, BrakePressureReport, AkitGlobalenbl, DbwBrakereport
+from raptor_dbw_msgs.msg import AkitBrakerequest, BrakePressureReport, AkitGlobalenbl
 from analogx_interface_msgs.msg import Analogx1, BrakeSensorBodyTemp, BrakeTemp
 
 from sklearn.preprocessing import MinMaxScaler
@@ -52,6 +52,8 @@ BRAKE_OFFSET_KPA = 500
 # above 0.066: oscilation
 K = 0.01
 
+DEADBAND = 10
+
 # deadband command
 # ros2 topic pub /kartech_linear_actuator_interface_interface/kd_freq_deadband_request kartech_linear_actuator_interface_msgs/msg/KdFreqDeadbandRequest 
 #    '{messagetype: 245, datatype: 1, autoreplyflag: 1, confirmationflag: 0, kd: 65535, errordeadband: 5, byte3: 1}'
@@ -67,33 +69,35 @@ class KartechLinearActuatorController(Node):
 
     def __init__(self):
         super().__init__('kartech_linear_actuator_controller')
-        # Publishers
-        self.brake_control_publisher_ = self.create_publisher(
-            AkitBrakerequest, 
-            '/raptor_dbw_interface/akit_brakerequest', 
-            qos_profile_sensor_data)
+        self.brake_control_publisher_ = self.create_publisher(BrakeControl, '/kartech_linear_actuator_interface_interface/brake_control', qos_profile_sensor_data)
+        self.brake_deadband_publisher_ = self.create_publisher(KdFreqDeadbandRequest, '/kartech_linear_actuator_interface_interface/kd_freq_deadband_request', qos_profile_sensor_data)
         self.brake_telemetry_publisher_ = self.create_publisher(
             Float32MultiArray, 
             '/brake_control/telemetry',
             qos_profile_sensor_data)
-        # Subscribers
-        self.brake_position_report_subscriber_ = self.create_subscription(
-            DbwBrakereport,
-            '/raptor_dbw_interface/dbw_brakereport',
-            self.brake_position_report_callback,
+        
+        self.brake_request_subscriber_ = self.create_subscription(
+            AkitBrakerequest,
+            '/raptor_dbw_interface/akit_brakerequest',
+            self.brake_request_callback,
             qos_profile_sensor_data)
         self.brake_pressure_subscriber_ = self.create_subscription(
             BrakePressureReport,
             '/raptor_dbw_interface/brake_pressure_report',
             self.brake_pressure_sensor_callback,
             qos_profile_sensor_data)
-        # TODO (github/jimenezjose): Remove AnalogX dependency.
+        self.brake_position_report_subscriber_ = self.create_subscription(
+            BrakePositionReport,
+            '/kartech_linear_actuator_interface_interface/brake_position_report',
+            self.brake_position_report_callback,
+            qos_profile_sensor_data)
         self.analogx_brake_pressure_subscriber_ = self.create_subscription(
             Analogx1,
             '/analogx_interface_interface/analogx1',
             self.analogx_sensor_callback,
             qos_profile_sensor_data)
-        self.estop_subscriber_ = self.create_subscription(
+        # TODO: add "_" suffix.
+        self.estop_subscriber = self.create_subscription(
             Heartbeat,
             '/kartech_linear_actuator_interface_interface/heartbeat',
             self.estop_callback,
@@ -103,28 +107,24 @@ class KartechLinearActuatorController(Node):
                 '/raptor_dbw_interface/akit_globalenbl',
                 self.autonomous_heartbeat_callback,
                 qos_profile_sensor_data)
-        # Temp
-        self.rvc_subscriber_ = self.create_subscription(
-            AkitBrakerequest,
-            '/temp/raptor_dbw_interface/akit_brakerequest',
-            self.brake_request_callback,
-            qos_profile_sensor_data)
-        
 
         self.brake_control_timer = self.create_timer(0.01, self.brake_control_callback)
         self.calibration_timer = self.create_timer(0.05, self.on_calibration_timer)
 
         self.brake_pressure_kpa = None
+        self.analogx_brake_pressure_mv = None
         self.analogx_brake_pressure_kpa = None
         self.brake_request = None
         self.estop_override = False
         self.calibration_brake_position = None
         self.calibration_start_time = 0
-        self.previous_dbw_brakepdlposnfdbck = 0
+        self.previous_shaftextension = 0
         self.is_autonomous = False
 
         self.brakeModel = BrakeModel()
 
+        self.send_deadband(DEADBAND)
+    
     def autonomous_heartbeat_callback(self, autonomous_heartbeat):
         self.is_autonomous = bool(autonomous_heartbeat.akit_globalbywireenblreq)
 
@@ -133,18 +133,6 @@ class KartechLinearActuatorController(Node):
 
     def brake_request_callback(self, brake_request):
         self.brake_request = brake_request
-
-    def brake_position_report_callback(self, brake_position_report):
-        self.brake_position = brake_position_report
-    
-    def brake_pressure_sensor_callback(self, brake_pressure_sensor):
-        # TODO (github/jimenezjose): Read kpa directly from the raptor.
-        brake_pressure_mv = brake_pressure_sensor.brake_pressure_fdbk_front
-        self.brake_pressure_kpa = (0.5672 * brake_pressure_mv - 246.6) * 6.89476
-
-    def analogx_sensor_callback(self, analogx_sensor):
-        analogx_brake_pressure_mv = analogx_sensor.brake_pressure
-        self.analogx_brake_pressure_kpa = (0.5672 * analogx_brake_pressure_mv - 246.6) * 6.89476
 
     def brake_control_callback(self):
         if self.estop_override:
@@ -180,23 +168,70 @@ class KartechLinearActuatorController(Node):
         self.brake_telemetry_publisher_.publish(brake_tlm_msg)
         self.send_brake_position(position)
 
+    def brake_pressure_sensor_callback(self, brake_pressure_sensor):
+        brake_pressure_mv = brake_pressure_sensor.brake_pressure_fdbk_front
+        self.brake_pressure_kpa = (0.5672 * brake_pressure_mv - 246.6) * 6.89476
+    
+    def brake_position_report_callback(self, brake_position_report):
+        self.brake_position = brake_position_report
+
+    def analogx_sensor_callback(self, analogx_sensor):
+        self.analogx_brake_pressure_mv = analogx_sensor.brake_pressure
+        self.analogx_brake_pressure_kpa = (0.5672 * self.analogx_brake_pressure_mv - 246.6) * 6.89476
+    
+    def send_deadband(self, deadband):
+        msg = KdFreqDeadbandRequest()
+        msg.stamp = self.get_clock().now().to_msg()
+        msg.messagetype = 245
+        msg.datatype = 1
+        msg.autoreplyflag = 1
+        msg.confirmationflag = 0
+        msg.kd = 65535
+        msg.errordeadband = deadband
+        msg.byte3 = 1
+        self.brake_deadband_publisher_.publish(msg)
+        
     def send_brake_position(self, position):
-        msg = AkitBrakerequest()
+        msg = BrakeControl()
         msg.stamp = self.get_clock().now().to_msg()
         position += 500.0
-        msg.akit_brakepedalreq = position
+        brake_position_report_in_range = self.brake_position.shaftextension - 500.0 > BRAKE_MIN_POSITION and self.brake_position.shaftextension - 500.0 < BRAKE_THRESHOLD 
+        brake_position_request_gradient_in_range = (position - self.brake_position.shaftextension > 0 and self.brake_position.shaftextension - 500.0 < BRAKE_THRESHOLD) or (position - self.brake_position.shaftextension < 0 and self.brake_position.shaftextension - 500.0 > BRAKE_MIN_POSITION)
+        dpos_low, dpos_hi = self.split_brake_position(int(position))
+        # motor_enable = 1 if brake_position_report_in_range or brake_position_request_gradient_in_range or not self.brakeModel.calibrated else 0
+        motor_enable = 1 if self.motorEnable(position, self.brake_position.shaftextension - 500.0, BRAKE_THRESHOLD) or not self.brakeModel.calibrated else 0
+        msg.position_command = 15
+        msg.datatype = 10
+        msg.autoreply_flag = 1
+        msg.confirmation_flag = 0
+        msg.dpos_low = dpos_low
+        msg.dpos_hi = dpos_hi
+        msg.motor_enable = motor_enable
+        msg.clutch_enable = 1
         self.brake_control_publisher_.publish(msg)
+
+    def motorEnable(self, brakeRequest, brakePosition, threshold):
+        min_threshold = (1.55 - 0.5) * 1000.0
+        if brakePosition < min_threshold:
+            return brakeRequest > min_threshold
+        elif brakePosition > threshold:
+            return brakeRequest < threshold
+        return True
+    
+    def split_brake_position(self, position):
+        dpos_low = position & 0x00FF
+        dpos_hi = (position >> 8) & 0x001F
+        return dpos_low, dpos_hi
     
     def linear_map(self, x, x_min, x_max, y_min, y_max):
         return (x - x_min) * (y_max - y_min) / (x_max - x_min) + y_min
-
+    
     def on_calibration_timer(self):
         """ 
         Brake calibration uses a sine wave actuation with a period of 10 seconds that collects
-        data on the relationship of brake position and pressure and fits a regressional piecewise
-        linear curve.
+        data on the relationship of brake position and pressure and fits a regressional sigmoid 
+        parent function.
         """
-        # TODO (github/jimenezjose): Allow callibration to have priveleged control of the brake (past the thresholds).
         if not self.is_autonomous:
             return
         T = 30.0
@@ -210,14 +245,14 @@ class KartechLinearActuatorController(Node):
         phi = 1 * np.pi / 2.0
         self.calibration_brake_position = A * np.sin( w * t + phi) + D
 
-        if self.brake_position.dbw_brakepdlposnfdbck is not None and self.analogx_brake_pressure_kpa is not None:
-            if self.brake_position.dbw_brakepdlposnfdbck < 500.0:
+        if self.brake_position.shaftextension is not None and self.analogx_brake_pressure_kpa is not None:
+            if self.brake_position.shaftextension < 500.0:
                 return
-            X_POSITION.append(self.brake_position.dbw_brakepdlposnfdbck - 500.0)
+            X_POSITION.append(self.brake_position.shaftextension - 500.0)
             Y_PRESSURE.append(self.analogx_brake_pressure_kpa)
-            X_VELOCITY.append(self.brake_position.dbw_brakepdlposnfdbck - self.previous_dbw_brakepdlposnfdbck)
-            print(f"position: {self.brake_position.dbw_brakepdlposnfdbck - 500.0}, pressure: {self.analogx_brake_pressure_kpa}, velocity: {self.brake_position.dbw_brakepdlposnfdbck - self.previous_dbw_brakepdlposnfdbck}")
-            self.previous_dbw_brakepdlposnfdbck = self.brake_position.dbw_brakepdlposnfdbck
+            X_VELOCITY.append(self.brake_position.shaftextension - self.previous_shaftextension)
+            print(f"position: {self.brake_position.shaftextension - 500.0}, pressure: {self.analogx_brake_pressure_kpa}, velocity: {self.brake_position.shaftextension - self.previous_shaftextension}")
+            self.previous_shaftextension = self.brake_position.shaftextension
 
         if len(X_POSITION) >  T / (self.calibration_timer.timer_period_ns / 1e9):
             positions = X_POSITION
@@ -227,7 +262,6 @@ class KartechLinearActuatorController(Node):
             self.calibration_timer.cancel()
 
 class BrakeModel:
-    # TODO (github/jimenezjose): Modularize the BrakeModel in a seperate file.
     def __init__(self):
         self.models = {"sigmoid": 0, "piecewise linear curve": 1}
         self._model = self.models["piecewise linear curve"]
